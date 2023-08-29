@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cloud-namespace
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloud-deployment
+  namespace: cloud-namespace
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: cloud-app
+  template:
+    metadata:
+      labels:
+        app: cloud-app
+    spec:
+      containers:
+        - name: cloud-app-container
+          image: webimage:latest
+          ports:
+            - containerPort: 8000
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+          livenessProbe:
+            httpGet:
+              path: /live
+              port: 8000
+          env:
+            - name: UUID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloud-app-service
+  namespace: cloud-namespace
+spec:
+  selector:
+    app: cloud-app
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
+

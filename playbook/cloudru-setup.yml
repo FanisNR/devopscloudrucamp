@@ -1,0 +1,48 @@
+- name: Configure Ubuntu Server
+  hosts: localhost
+  become: yes
+
+  tasks:
+    - name: Create user 'cloudru' with password 'cloudpass'
+      user:
+        name: cloudru
+        password: "{{ 'cloudpass' | password_hash('sha512', 'mysecretsalt') }}"
+        shell: /bin/bash
+      when: "'cloudru' not in ansible_facts.get('passwd', {})"
+      
+    - name: Copy public key to remote host
+      copy:
+        src: /home/spicepim/.ssh/id_rsa.pub
+        dest: /home/cloudru/.ssh/authorized_keys 
+        owner: cloudru
+        group: cloudru
+        mode: '0600'
+
+    - name: Ensure correct permissions on .ssh directory
+      file:
+        path: /home/cloudru/.ssh
+        state: directory
+        owner: cloudru
+        group: cloudru
+        mode: '0700'
+
+    - name: Allow SSH key authentication for 'cloudru'
+      authorized_key:
+        user: cloudru
+        state: present
+        key: "{{ lookup('file', '/home/spicepim/.ssh') }}"
+      when: "'cloudru' in ansible_facts.get('passwd', {})"
+
+    - name: Disallow SSH login for 'root'
+      replace:
+        path: /etc/ssh/sshd_config
+        regexp: '^PermitRootLogin'
+        replace: 'PermitRootLogin no'
+      notify: restart sshd
+
+  handlers:
+    - name: restart sshd
+      service:
+        name: sshd
+        state: restarted
+
