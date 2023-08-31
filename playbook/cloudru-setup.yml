@@ -10,13 +10,24 @@
         shell: /bin/bash
       when: "'cloudru' not in ansible_facts.get('passwd', {})"
       
+    - name: Ensure .ssh directory exists for 'cloudru'
+      file:
+        path: /home/cloudru/.ssh
+        state: directory
+        owner: cloudru
+        group: cloudru
+        mode: '0700'
+      become: yes
+      when: not ansible_facts.get('fileinfo', {}).get('/home/cloudru/.ssh')
+
     - name: Copy public key to remote host
       copy:
-        src: /home/spicepim/.ssh/id_rsa.pub
-        dest: /home/cloudru/.ssh/authorized_keys 
+        src: /home/spicepim/.ssh/authorized_keys
+        dest: /home/cloudru/.ssh/authorized_keys
         owner: cloudru
         group: cloudru
         mode: '0600'
+      become: yes
 
     - name: Ensure correct permissions on .ssh directory
       file:
@@ -30,7 +41,7 @@
       authorized_key:
         user: cloudru
         state: present
-        key: "{{ lookup('file', '/home/spicepim/.ssh') }}"
+        key: "{{ lookup('file', '/home/spicepim/.ssh/id_rsa.pub') }}"
       when: "'cloudru' in ansible_facts.get('passwd', {})"
 
     - name: Disallow SSH login for 'root'
@@ -45,4 +56,3 @@
       service:
         name: sshd
         state: restarted
-
