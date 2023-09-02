@@ -8,3 +8,4 @@
 8. kind --version
 9. kind create cluster --name my-cluster
 10. (sudo)kubectl apply -f cloud-manifest.yaml
+11. (sudo)kubectl apply -f service.yaml

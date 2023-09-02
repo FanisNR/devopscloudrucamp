@@ -8,21 +8,21 @@ metadata:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cloud-deployment
+  name: {{ .Release.Name }}-cloud-deployment
   namespace: cloud-namespace
 spec:
-  replicas: 3
+  replicas: {{ .Values.spec.replicas }}
   selector:
     matchLabels:
       app: cloud-app
   template:
     metadata:
       labels:
-        app: cloud-app
+        app: {{ .Release.Name }}-cloud-app
     spec:
       containers:
         - name: cloud-app-container
-          image: webimage:latest
+          image: {{ .Values.containers.image }}
           ports:
             - containerPort: 8000
           readinessProbe:
@@ -34,6 +34,8 @@ spec:
               path: /live
               port: 8000
           env:
+            - name: AUTHOR
+              value: {{ .Values.name.value }}
             - name: UUID
               valueFrom:
                 fieldRef:

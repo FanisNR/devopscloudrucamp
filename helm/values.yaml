@@ -1,0 +1,10 @@
+#used in templates is the default
+
+containers:
+  image: webimage:latest
+
+spec:
+  replicas: 3
+
+name: AUTHOR
+  value: "spicepim"
